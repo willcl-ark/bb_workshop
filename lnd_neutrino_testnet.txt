@@ -1,0 +1,57 @@
+### Open a terminal tab and run the following commands:
+
+1
+# extract the lnd image
+tar -C ~/ -xzf lnd-linux-amd64-v0.6.1-beta.tar.gz
+
+2
+# change into lnd folder
+cd lnd-linux-amd64-v0.6.1-beta
+
+3
+# run lnd on bitcoin network, testnet, using neutrino
+./lnd --bitcoin.active --bitcoin.testnet --debuglevel=info --bitcoin.node=neutrino --neutrino.connect=faucet.lightning.community`
+
+4
+Open a new terminal window
+
+5
+pip install lnd-grpc
+
+
+### (Optional) Make a new wallet using the CLI
+
+6
+cd lnd-linux-amd64-v0.6.1-beta
+
+7
+./lncli create
+
+8
+Enter a password, this is for testnet coins, so you can use an insecure password, 8 character minimum
+
+
+
+
+### To start over:
+
+1
+Open a new terminal tab
+
+2
+cd lnd-linux-amd64-v0.6.1-beta`
+
+3
+./lnd --bitcoin.active --bitcoin.testnet --debuglevel=info --bitcoin.node=neutrino --neutrino.connect=faucet.lightning.community
+
+4
+Open a new terminal tab
+
+5
+cd lnd-linux-amd64-v0.6.1-beta
+
+6
+./lncli unlock
+
+7
+Enter your password and hit enter
