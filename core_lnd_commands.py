@@ -1,12 +1,12 @@
+# import the lnd_grpc module
 import lnd_grpc
 
-# instantiate a new gRPC client
+# instantiate a new gRPC client object
 lnd = lnd_grpc.Client(network='testnet')
 
 # create a random wallet seed
 # required to start things on lnd backend
 seed = lnd.gen_seed()
-print(seed)
 
 # commit the seed and create the new wallet
 lnd.init_wallet(wallet_password='password1', cipher_seed_mnemonic=seed.cipher_seed_mnemonic)
