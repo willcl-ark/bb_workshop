@@ -38,16 +38,9 @@ Dev environment should be one of:
     
 * Run LND using Neutrino in testnet mode with the following command:
 
-    ```
-    ./lnd \
-    --bitcoin.active \
-    --bitcoin.testnet \
-    --debuglevel=info \
-    --bitcoin.node=neutrino \
-    --neutrino.connect=faucet.lightning.community
-    ```
-
-This will connect to Lightning Labs' neutrino node so no local bitcoind is necessary.
+    `./lnd --bitcoin.active --bitcoin.testnet --debuglevel=debug --bitcoin.node=neutrino --neutrino.addpeer=btcd-testnet.lightning.computer --neutrino.addpeer=faucet.lightning.community`
+    
+This will connect to Lightning Labs' neutrino node so no local bitcoind is necessary. There has been ~1,500,000 blocks on testnet now so inital sync can take some time. Hopefully no longer than 10 minutes. With debug level set to 'debug' we can keep an eye on progress and turn down the debug level later using the python RPCs.
 
 This window must be left running (it can run in a screen/tmux session if you so choose), so further terminal commands should be run in a new terminal.
 
@@ -64,12 +57,18 @@ This window must be left running (it can run in a screen/tmux session if you so 
 ----
 
 ### 4. Initialise the rpc connection
+* In a new Python Notebook window (Kubernetes) or a python console (own machine):
+
 * Import the package using: 
 
     `import lnd_grpc`
 * Create a new client object: 
 
     `lnd = lnd_grpc.Client(network='testnet')`
+
+* Open a tab with the LND RPC commands for reference:
+
+    `https://api.lightning.community/?python#lnd-grpc-api-reference`
 
 ----
 
@@ -92,11 +91,24 @@ Next you can initialise the wallet which also creates the wallet macaroons:
 ----
 
 ### 7. Get testnet Bitcoins
-* First generate a wallet address to recieve:
+* First we have to make sure that we are synced to the network fully:
+
+    `lnd.get_info().synced_to_chain` should return `True`
+    
+* If you wanted to be notified when synced you could wait on the result with something like:
+
+    ```
+    import time
+    while not lnd.get_info().synced_to_chain:
+        time.sleep(1)
+    print('Synced!')
+    ```
+
+* Generate a new receive address:
 
     `addr = lnd.new_address('p2wkh')`
 
-* Get some testnet bitcoin:
+* Create a QR code to get some testnet bitcoin:
 
     * `import qrcode`
 
@@ -106,7 +118,7 @@ Next you can initialise the wallet which also creates the wallet macaroons:
 
     * `display(qr_code)`
     
-* Wait for confirmations
+* Wait for confirmations. Unfortunately testnet blocktimes can be between 1 minute and 20 minutes due to its nature, so hopefully we don't have to wait long. 
 
 ----
 
