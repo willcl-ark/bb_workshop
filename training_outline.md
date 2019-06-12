@@ -66,6 +66,12 @@ This window must be left running (it can run in a screen/tmux session if you so 
   
   We will only use the QR code module to display a receive address to more easily send you testnet coins.
   
+* Add the qrcode script path to PATH to satisfy warning:
+
+  ```bash
+  PATH=$PATH:/home/jovyan/.local/bin
+  ```
+  
 ----
 
 ### 4. Initialise the rpc connection
