@@ -42,7 +42,7 @@ Dev environment should be one of:
 * Run LND using Neutrino in testnet mode with the following command:
 
     ```bash
-    ./lnd --bitcoin.active --bitcoin.testnet --debuglevel=debug --bitcoin.node=neutrino --neutrino.addpeer=btcd-testnet.lightning.computer 
+    ./lnd --bitcoin.active --bitcoin.testnet --debuglevel=info --bitcoin.node=neutrino --neutrino.connect=btcd-testnet.lightning.computer 
     ```
     
 This will connect to Lightning Labs' neutrino node so no local bitcoind is necessary. There has been ~1,500,000 blocks on testnet3 now, so inital sync can take some time. Hopefully no longer than 10 minutes with some decent CPU. With debug level set to 'debug' we can keep an eye on progress and turn down the debug level later using the python RPCs.
