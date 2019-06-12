@@ -69,7 +69,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
 ----
 
 ### 4. Initialise the rpc connection
-* In a new Python Notebook window (Kubernetes) or a python REPL console (own machine):
+* In this Notebook window (Kubernetes) or a python REPL console (own machine):
 
 * Import the client class from the package: 
 
@@ -346,7 +346,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
     
      iii) the receiver needs to settle when they are happy to do so.
 
-* As we need to generate our own preimage, we need to generate 32 random bytes and also create the sha256 hash of them. Python has a nice library called secrets for this now:
+* As we need to generate our own preimage, we need to generate 32 random bytes and also get the sha256 hash digest. Python has a nice library called secrets for generating random bytes:
 
   **Recipient step:**
 
@@ -385,9 +385,6 @@ This window must be left running (it can run in a screen/tmux session if you so 
   def inv_sub_worker(_hash):
       for _response in lnd.subscribe_single_invoice(_hash):
           print(f'\n\nInvoice subscription update: {_response}\n')
-  
-  def settle_inv_worker(_preimage):
-      lnd.settle_invoice(preimage=_preimage)
   ```
   
   **Sender step:**
@@ -424,4 +421,22 @@ This window must be left running (it can run in a screen/tmux session if you so 
   pay_inv.start()
   ```
 
-* At this stage, the recipient should see the print from their subscription thread that the invoice has had an update.
+* At this stage, the recipient should see the print from their subscription thread that the invoice has had an update. Now the ball is in their court as they can choose to settle or cancel the invoice. Lets look at these two options.
+
+  **Recipient step, option 1 - settle invoice:**
+  
+  ```python
+  # to settle, we can just call settle_invoice() with the preimage
+  lnd.settle_invoice(preimage=_preimage)
+  ```
+  
+  **Reciepient step, option 2 - cancel payment:**
+  
+  ```python
+  # to cancel invoice we call cancel_invoice() with the hash of the preimage (payment_hash)
+  lnd.cancel_invoice(payment_hash=_hash)
+  ```
+  
+* After settling or canceling, the recipient should receive the appropriate response from their invoice subscription (and possibly the return of the settle/cancel call itself).
+
+* The sender's `pay_inv()` thread will then also return. It will include either a populated `payment_error` field indicating failure, or a populated `payment_preimage` field, indicating the payment was settled successfully. 
