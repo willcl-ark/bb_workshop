@@ -52,17 +52,23 @@ This window must be left running (it can run in a screen/tmux session if you so 
 ----
 
 ### 3. Install lnd_grpc and qrcode
-* In a **new** terminal window:
+* In a **new** terminal window, first we update pip:
 
-    ```bash
-    pip install --user lnd_grpc
-    ```
+  ```bash
+  pip install --upgrade pip
+  ```
+ 
+* Now install LND:
+
+  ```bash
+  pip install --user lnd_grpc
+  ```
     
 * Then:
 
-    ```bash
-    pip install --user qrcode[pil]
-    ```
+  ```bash
+  pip install --user qrcode[pil]
+  ```
   
   We will only use the QR code module to display a receive address to more easily send you testnet coins.
   
