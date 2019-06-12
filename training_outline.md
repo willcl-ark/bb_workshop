@@ -316,7 +316,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
   def sub_invoices():
       for response in lnd.subscribe_invoices():
           print('\n\n-------\n')
-          print(f'New invoice from subscription: {response}\n\n')
+          print(f'New invoice from subscription:\n{response}\n\n')
   
   invoice_sub = threading.Thread(target=sub_invoices, daemon=True)
   invoice_sub.start()
@@ -384,7 +384,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
   ```python
   def inv_sub_worker(_hash):
       for _response in lnd.subscribe_single_invoice(_hash):
-          print(f'\n\nInvoice subscription update: {_response}\n')
+          print(f'\n\nInvoice subscription update:\n{_response}\n')
   ```
   
   **Sender step:**
