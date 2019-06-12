@@ -307,7 +307,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
   
 ----
 
-###13. Threading of streaming 'subscription' RPCs
+### 13. Threading of streaming 'subscription' RPCs
 
 * There are multiple 'subscribe' RPC calls which setup a server-client stream to notify the client of new events. As they are implemented, these will naturally block the single Python GIL thread, so we must setup threads to run these sanely.
 
@@ -334,7 +334,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
   
 ----
 
-###14. Hold Invoices
+### 14. Hold Invoices
 
 * Quite a complicated workflow, where the main difference from normal invoice process is that the receiver does not have to settle the invoice immediately -- they can 'refuse' the payment.
 
