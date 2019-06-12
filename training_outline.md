@@ -173,6 +173,8 @@ This window must be left running (it can run in a screen/tmux session if you so 
     lnd.list_peers()
     ```
 
+* It might also be fun to connect to and open a channel to a regular testnet peer too, so that we are not stuck on our own micro-lightning network. Find a peer on [1ml-testnet](https://1ml.com/testnet) to connect to as above.
+
 ----
 
 ### 9. Open a channel
@@ -188,6 +190,8 @@ This window must be left running (it can run in a screen/tmux session if you so 
     ```
     
 * If successful, you will see the funding txid returned
+
+* Try to open a channel with at least one local peer and your 'WAN' peer from 1ML databse.
 
 ----
 
@@ -332,4 +336,92 @@ This window must be left running (it can run in a screen/tmux session if you so 
 
 ###14. Hold Invoices
 
-* Quite a complicated workflow, where the two defining characteristics are that i) the receiver does not generate the preimage for the payment, and that ii) the receiver does not have to settle the invoice immediately.
+* Quite a complicated workflow, where the main difference from normal invoice process is that the receiver does not have to settle the invoice immediately -- they can 'refuse' the payment.
+
+* This creates some extra requirements on the programming side, as
+
+     i) receiver must monitor for 'payment' of the invoice (before deciding whether to settle),
+    
+     ii) the sender's `pay_invoice()` command will block indefinitely, until the receiver decides to settle and
+    
+     iii) the receiver needs to settle when they are happy to do so.
+
+* As we need to generate our own preimage, we need to generate 32 random bytes and also create the sha256 hash of them. Python has a nice library called secrets for this now:
+
+  **Recipient step:**
+
+  ```python
+  from hashlib import sha256
+  from secrets import token_bytes
+
+  def random_32_byte_hash():
+      """
+      Can generate an invoice preimage and corresponding payment hash
+      :return: 32 byte sha256 hash digest, 32 byte preimage
+      """
+      preimage = token_bytes(32)
+      _hash = sha256(preimage)
+      return _hash.digest(), preimage
+  
+  # generate a hash and preimage
+  _hash, preimage = random_32_byte_hash()
+  ```
+  
+ * The recipient can now generate the hold invoice, manually supplying the sha256 hash we generated as the invoice hash:
+ 
+   **Recipient step:**
+ 
+  ```python
+  invoice = lnd.add_hold_invoice(memo='pytest hold invoice', hash=_hash, value=1001)
+  ```
+  
+  As before, we will need to exchange this out of band, so paste the payment request string and some identifier into the google sheet.
+
+* Now we can define the functions we will need to thread:
+
+  **Recipient step:**
+  
+  ```python
+  def inv_sub_worker(_hash):
+      for _response in lnd.subscribe_single_invoice(_hash):
+          print(f'\n\nInvoice subscription update: {_response}\n')
+  
+  def settle_inv_worker(_preimage):
+      lnd.settle_invoice(preimage=_preimage)
+  ```
+  
+  **Sender step:**
+  
+  ```python
+  def pay_hold_inv_worker(payment_request):
+      lnd.pay_invoice(payment_request=payment_request)
+  ```
+  
+* Now we can begin the payment sequence. First the recipient should subscribe to updates for the invoice so they know when they've received payment:
+
+  **Recipient step:**
+  
+  ```python
+  # setup the thread
+  inv_sub = threading.Thread(target=inv_sub_worker, name='inv_sub',
+                             args=[_hash, ], daemon=True)
+  
+  # start the subscription thread
+  inv_sub.start()
+  ```
+  
+  You can check if the thread has started properly with `inv_sub.is_alive()`
+  
+* Now the sender can make the payment. As mentioned above, this will block until settled, so its useful to run in a thread too. Retrieve the payment_request string from the google sheet.
+
+  **Sender step:**
+  
+  ```python
+  # setup the pay thread
+  pay_inv = threading.Thread(target=pay_hold_inv_worker, args=[payment_request="payment_request", ])
+  
+  # Start the pay thread
+  pay_inv.start()
+  ```
+
+* At this stage, the recipient should see the print from their subscription thread that the invoice has had an update.
