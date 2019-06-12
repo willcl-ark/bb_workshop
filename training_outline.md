@@ -10,22 +10,22 @@ Dev environment should be one of:
 
 #### Own machine
 * Setup and activate a Python >=3.6 virtual environment
-* Download lnd v0.6.1-beta binary for your OS:
-
-    `https://github.com/lightningnetwork/lnd/releases/tag/v0.6.1-beta`
+* Download lnd v0.6.1-beta binary for your OS: [lnd/releases/v0.6.1-beta](https://github.com/lightningnetwork/lnd/releases/tag/v0.6.1-beta)
     
 * Extract the binary from tar in home directory:
 
-    `tar -C ~/ -xzf lnd-linux-amd64-v0.6.1-beta.tar.gz`
+    ```bash
+    tar -C ~/ -xzf lnd-linux-amd64-v0.6.1-beta.tar.gz
+    ```
     
 * Remove the tar.gz:
 
-    `rm lnd-linux-amd64-v0.6.1-beta.tar.gz`
+    ```bash
+    rm lnd-linux-amd64-v0.6.1-beta.tar.gz
+    ```
 
 #### Kubernetes cloud
-* To connect to Kubernetes cloud JupyterLab visit:
-
-    `http://35.246.47.214`
+* To connect to Kubernetes cloud JupyterLab visit [Kubernetes Login](http://35.246.47.214)
     
   and sign in using your GitHub ID via the GitHub OAuth.
 
@@ -38,7 +38,9 @@ Dev environment should be one of:
     
 * Run LND using Neutrino in testnet mode with the following command:
 
-    `./lnd --bitcoin.active --bitcoin.testnet --debuglevel=debug --bitcoin.node=neutrino --neutrino.addpeer=btcd-testnet.lightning.computer --neutrino.addpeer=faucet.lightning.community`
+    ```bash
+    ./lnd --bitcoin.active --bitcoin.testnet --debuglevel=debug --bitcoin.node=neutrino --neutrino.addpeer=btcd-testnet.lightning.computer --neutrino.addpeer=faucet.lightning.community
+    ```
     
 This will connect to Lightning Labs' neutrino node so no local bitcoind is necessary. There has been ~1,500,000 blocks on testnet now so inital sync can take some time. Hopefully no longer than 10 minutes. With debug level set to 'debug' we can keep an eye on progress and turn down the debug level later using the python RPCs.
 
@@ -49,11 +51,16 @@ This window must be left running (it can run in a screen/tmux session if you so 
 ### 3. Install lnd_grpc and qrcode
 * In a **new** terminal window:
 
-    `pip install lnd_grpc`
+    ```bash
+    pip install lnd_grpc
+    ```
+    
 * Then:
 
-    `pip install qrcode[pil]`
-
+    ```bash
+    pip install qrcode[pil]
+    ```
+  
 ----
 
 ### 4. Initialise the rpc connection
@@ -61,25 +68,32 @@ This window must be left running (it can run in a screen/tmux session if you so 
 
 * Import the package using: 
 
-    `import lnd_grpc`
+    ```python
+    import lnd_grpc
+    ```
+      
 * Create a new client object: 
 
-    `lnd = lnd_grpc.Client(network='testnet')`
+    ```python
+    lnd = lnd_grpc.Client(network='testnet')
+    ```  
 
-* Open a tab with the LND RPC commands for reference:
-
-    `https://api.lightning.community/?python#lnd-grpc-api-reference`
+* Open a tab with the LND RPC commands for reference:     [lnd-grpc-api-reference](https://api.lightning.community/?python#lnd-grpc-api-reference)
 
 ----
 
 ### 5. Initialise LND with a new wallet via WalletUnlocker Service
-To initialise a new LND wallet you must first provide or generate a seed:
+* To initialise a new LND wallet you must first provide or generate a seed:
 
-`seed = lnd.gen_seed()`
+    ```python
+    seed = lnd.gen_seed()
+    ```
 
-Next you can initialise the wallet which also creates the wallet macaroons:
+* Next you can initialise the wallet which also creates the wallet macaroons:
 
-`lnd.init_wallet(wallet_password='password', cipher_seed_mnemonic=seed.cipher_seed_mnemonic)`
+    ```python
+    lnd.init_wallet(wallet_password='password', cipher_seed_mnemonic=seed.cipher_seed_mnemonic)
+    ```
 
 ----
 
@@ -93,11 +107,15 @@ Next you can initialise the wallet which also creates the wallet macaroons:
 ### 7. Get testnet Bitcoins
 * First we have to make sure that we are synced to the network fully:
 
-    `lnd.get_info().synced_to_chain` should return `True`
-    
-* If you wanted to be notified when synced you could wait on the result with something like:
-
+    ```python
+    lnd.get_info().synced_to_chain
     ```
+    ... should return True
+    
+    
+* If you wanted to be notified when sync is complete, you could wait on the result with something like:
+
+    ```python
     import time
     while not lnd.get_info().synced_to_chain:
         time.sleep(1)
@@ -106,20 +124,173 @@ Next you can initialise the wallet which also creates the wallet macaroons:
 
 * Generate a new receive address:
 
-    `addr = lnd.new_address('p2wkh')`
+    ```python
+    addr = lnd.new_address('p2wkh')
+    ```  
 
 * Create a QR code to get some testnet bitcoin:
 
-    * `import qrcode`
-
-    * `from IPython.display import display`
-
-    * `qr_code = qrcode.make(addr.address)`
-
-    * `display(qr_code)`
+    ```python
+    import qrcode
+    from IPython.display import display
+    qr_code = qrcode.make(addr.address)
+    display(qr_code)
+    ```
     
-* Wait for confirmations. Unfortunately testnet blocktimes can be between 1 minute and 20 minutes due to its nature, so hopefully we don't have to wait long. 
+* Wait for confirmations. Unfortunately testnet blocktimes can be between 1 minute and 20 minutes due to its nature, so hopefully we don't have to wait long. You can check whether your coins are confirmed using `lnd.wallet_balance()` which will show it as unconfirmed balance.
+
 
 ----
 
-### 8. 
+### 8. Connect to peers
+* In the meantime we can connect to some peers. There are two peer connection methods in lnd-grpc, one which is the default lnd RPC command `connect_peer` and one which simplifies address entry, `connect`. connect_peer requires a ln.LightningAddress object as argument, whereas `connect` allows you to pass the address in string format as `"node_pubkey@host:port"`:
+
+    1. `lnd.connect_peer(addr: ln.LightningAddress)` or
+    2. `lnd.connect(address)`
+
+* To more easily swap node pubkeys, which you can obtain from `lnd.get_info().identity_pubkey`, perhaps a good idea to paste them into a google document: [node pubkeys](https://docs.google.com/spreadsheets/d/1eXq1bJFH_5I6ID2kpeJBdOkN5RMQCZmIug3GTgN2G6Y/edit#gid=0)
+
+* To get the IP address of workshop peers, open a new terminal (not python) window, and simply type `hostname -i`. This should return the required ip address.
+
+* The default port of 9735 is being used.
+
+* The suggestion would be to use the `connect` command, but you can try either!
+
+    ```python
+    lnd.connect(address="node_pubkey@ip_address:port")
+    ```
+    
+* Note that connecting is not the same as opening a channel, it is simply a networking-level connection, but it helps to find peers using ip addresses in case you do not have the full network graph info (or they do not appear in your network graph).
+
+* You can see which peers you are connected to at any time using
+    ```python
+    lnd.list_peers()
+    ```
+
+----
+
+### 9. Open a channel
+
+* Next up is to finally open a channel with a peer. As we are already `connect`-ed to them, we only need to provide the pub_key and local funding amount to start.
+
+* We will start with the synchronous version of open channel, as it blocks while it opens, but then nicely returns the result for us to see.
+
+* As we are using hex-encoded node_pubkeys (as returned by get_info), we must be careful to use the proper argument, `node_pubkey_string` rather than `node_pubkey`:
+
+    ```python
+    lnd.open_channel_sync(node_pubkey_string="", local_funding_amount)
+    ```
+    
+* If successful, you will see the funding txid returned
+
+----
+
+### 10. Create an invoice
+
+* Now we want to make a payment. Although direct 'key_send'/'sphinx send' is technically possible on mainnet today, we will use the standard invoice-payment lightning model
+
+* First, the receiver must create an invoice. This is easily done with `lnd.add_invoice()` which needs no additional parameters, not even a value! However conventionally the receiver requests a 'value' at least. A zero-value invoice can have any amount paid to it otherwise...
+
+    ```python
+    invoice = lnd.add_invoice(value=5000)
+    invoice
+    ```
+    
+* You can see the r_hash ('payment hash') as raw bytes, and the hex-encoded payment request along with the add_index. As the creator of the invoice, we also know the preimage ('r_preimage) and various other details, which we can expose by looking up the invoice by the payment hash. To avoid bytes conversions and other issues, we will simply reference the `invoice`'s .r_hash attribute in the lookup_invoice() method:
+
+    ```python
+    lnd.lookup_invoice(r_hash=invoice.r_hash)
+    ```
+    
+This will reveal the preimage, which is what we will reveal to the sender, upon receiving their "promise to pay".
+    
+----
+
+### 11. Pay an invoice
+
+* First we need to share these BOLT11-encoded payment requests. This is ually done via other channels, e.g. through a web interface, as we have none, we can use google docs again: [invoice payment_requests](https://docs.google.com/spreadsheets/d/1eXq1bJFH_5I6ID2kpeJBdOkN5RMQCZmIug3GTgN2G6Y/edit#gid=1809562352)
+
+* Once you have retrieved the payment request of the invoice you wish to pay, and especially for this method we have used of communicating them where there is a good chance they might get mixed up, it is a good idea to decode the payment request and check that it is as you expect.
+   
+    ```python
+    lnd.decode_payment_req(pay_req="payment_request_string")
+    ```
+    
+* The payment request is similarly decoded and checked using the `lncli` workflow
+
+* If the payment request is correct, then we can pay the invoice using `send_payment()` command:
+
+    ```python
+    lnd.send_payment_sync(payment_request="payment_request_string")
+    ```
+    
+* If successful, the payment preimage (r_preimage) will be displayed, along with the payment_hash (r_hash) and the route. If it fails, an appropriate error will be returned in full.
+
+----
+
+### 12. Backup
+
+* Now that we have opened some channels, it's the perfect time to back them up. LND has static channel backups (SCB) which, although not perfect, is the best option we have to offer at this stage.
+
+  *** Note that the below is specifically a channel backup and restore process. To backup and restore on-chain funds, only the `cipher_seed_mnemonic`. The `wallet_password` only encrypts this wallet on the disk. ***
+
+* SCB protocol will attempt to recover on-chain and payment channel balances, although only on-chain is fully guaranteed.
+
+* Although LND will create a `channel.backup` file automatically, it might not always be up to date. Make an up-to-date version using:
+
+    ```python
+    backup = lnd.export_all_channel_backups()
+    ```
+  
+  *** As we are not writing this backup to disk, only storing as a variable, be sure not to close this Notebook Window if you want to test a full delete and restore! ***
+    
+* Next it makes sense to verify that the backup will work, which you can do using:
+
+    ```python
+    lnd.verify_chan_backup(multi_chan_backup=backup.multi_chan_backup)
+    ```
+    
+* If you want to test the full workflow, you can try to delete the channel database and restore it:
+
+* Stop LND (ctrl+c in its terminal window), and then delete the channel.db using
+
+    ```bash
+    rm ~/.lnd/data/graph/testnet/channel.db
+    ```
+  
+* Now you can restart LND in the terminal using the same command used in 2. above. Switch back to the Jupyter Notebook and try to unlock the wallet using the same 'lnd' object -- it should still work even though LND node has been restarted:
+
+    ```python
+    lnd.unlock_wallet(wallet_password='password')
+    ```
+    (or whatever password you chose in 5.)
+
+* If the wallet unlocks, you can check that your previously-opened channels are not lost from the database: 
+
+    ```python
+    lnd.list_channels()
+    ```
+    should return nothing.
+    
+* Now lets try the restore:
+
+    ```python
+    lnd.restore_chan_backup(multi_chan_backup=backup.multi_chan_backup.multi_chan_backup)
+    ```
+  
+  If successful, it will still take a while for LND to recover the funds back into the on-chain wallet. The SCB protocol (more specifically the Data Loss Protection [DLP] protocol) requests that the channel partner force closes the channel. Before they do though, they'll send over the channel reestablishment handshake message which contains the unrevoked commitment point which we need to derive keys (will be fixed in BOLT 1.1 by making the key static) to sweep our funds.
+  
+* We can observe the log in the terminal session running LND to try and watch for the SCB process to complete. The first step takes around 60 seconds, but after that requires some on-chain confirmations, so total time can vary. A selection of lines to watch for in the log as progress: 
+
+    ```bash
+    'Inserting 1 SCB channel shells into DB'
+    'Broadcasting force close transaction'
+    'Publishing sweep tx'
+    '...a contract has been fully resolved!'
+    ```
+    
+* As a result of successful backup restore, all funds will be returned to the on-chain wallet (minus transaction fees), and the channels will be marked as 'recovered' and not allowed to be re-used.
+
+* You can also subscribe to `channel.backup` status changes using `lnd.subscribe_channel_backups()` to stimulate backup process, or write a shell script to manually monitor the `channel.backup` file on the filesystem itself, e.g. [this script](https://gist.github.com/alexbosworth/2c5e185aedbdac45a03655b709e255a3).
+
+  The Raspiblitz project also has a lot of neat shell scripts for things like this.
