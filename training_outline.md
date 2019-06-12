@@ -3,16 +3,19 @@
 ### 1. Setup dev environment
 Dev environment should be one of:
 
-* Running LND in testnet mode on own machine, requires:
+* Running workshop in testnet mode on own machine, requires:
     * Python >=3.6
+    * lnd v0.6.1-beta
     * Code editor
-* Running LND on Kubernetes cluster and programming using JupyterLab
+    
+* Running LND on Kubernetes cluster and programming using JupyterLab, requires:
+    * Github account for login
 
 #### Own machine
 * Setup and activate a Python >=3.6 virtual environment
 * Download lnd v0.6.1-beta binary for your OS: [lnd/releases/v0.6.1-beta](https://github.com/lightningnetwork/lnd/releases/tag/v0.6.1-beta)
     
-* Extract the binary from tar in home directory:
+* Extract the binary, e.g. for linux from tar in home directory:
 
     ```bash
     tar -C ~/ -xzf lnd-linux-amd64-v0.6.1-beta.tar.gz
@@ -42,9 +45,9 @@ Dev environment should be one of:
     ./lnd --bitcoin.active --bitcoin.testnet --debuglevel=debug --bitcoin.node=neutrino --neutrino.addpeer=btcd-testnet.lightning.computer --neutrino.addpeer=faucet.lightning.community
     ```
     
-This will connect to Lightning Labs' neutrino node so no local bitcoind is necessary. There has been ~1,500,000 blocks on testnet now so inital sync can take some time. Hopefully no longer than 10 minutes. With debug level set to 'debug' we can keep an eye on progress and turn down the debug level later using the python RPCs.
+This will connect to Lightning Labs' neutrino node so no local bitcoind is necessary. There has been ~1,500,000 blocks on testnet3 now, so inital sync can take some time. Hopefully no longer than 10 minutes with some decent CPU. With debug level set to 'debug' we can keep an eye on progress and turn down the debug level later using the python RPCs.
 
-This window must be left running (it can run in a screen/tmux session if you so choose), so further terminal commands should be run in a new terminal.
+This window must be left running (it can run in a screen/tmux session if you so choose), so any further terminal commands should be run in a new terminal session.
 
 ----
 
@@ -61,24 +64,27 @@ This window must be left running (it can run in a screen/tmux session if you so 
     pip install qrcode[pil]
     ```
   
+  We will only use the QR code module to display a receive address to more easily send you testnet coins.
+  
 ----
 
 ### 4. Initialise the rpc connection
-* In a new Python Notebook window (Kubernetes) or a python console (own machine):
+* In a new Python Notebook window (Kubernetes) or a python REPL console (own machine):
 
-* Import the package using: 
+* Import the client class from the package: 
 
     ```python
-    import lnd_grpc
+    from lnd_grpc import Client
     ```
       
-* Create a new client object: 
+* Now we are ready to create a new client object called 'lnd': 
 
     ```python
-    lnd = lnd_grpc.Client(network='testnet')
+    lnd = Client(network='testnet')
     ```  
 
-* Open a tab with the LND RPC commands for reference:     [lnd-grpc-api-reference](https://api.lightning.community/?python#lnd-grpc-api-reference)
+* Now is a good time to open a tab with all the LND RPC commands for reference:     [lnd-grpc-api-reference](https://api.lightning.community/?python#lnd-grpc-api-reference)
+  You can also access the docstring help using standard Python `help(Class.method)` syntax
 
 ----
 
@@ -202,7 +208,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
     lnd.lookup_invoice(r_hash=invoice.r_hash)
     ```
     
-This will reveal the preimage, which is what we will reveal to the sender, upon receiving their "promise to pay".
+    This will reveal the preimage, which is what we will reveal to the sender, upon receiving their "promise to pay".
     
 ----
 
@@ -294,3 +300,36 @@ This will reveal the preimage, which is what we will reveal to the sender, upon 
 * You can also subscribe to `channel.backup` status changes using `lnd.subscribe_channel_backups()` to stimulate backup process, or write a shell script to manually monitor the `channel.backup` file on the filesystem itself, e.g. [this script](https://gist.github.com/alexbosworth/2c5e185aedbdac45a03655b709e255a3).
 
   The Raspiblitz project also has a lot of neat shell scripts for things like this.
+  
+----
+
+###13. Threading of streaming 'subscription' RPCs
+
+* There are multiple 'subscribe' RPC calls which setup a server-client stream to notify the client of new events. As they are implemented, these will naturally block the single Python GIL thread, so we must setup threads to run these sanely.
+
+  ```python
+  import threading
+  def sub_invoices():
+      for response in lnd.subscribe_invoices():
+          print('\n\n-------\n')
+          print(f'New invoice from subscription: {response}\n\n')
+  
+  invoice_sub = threading.Thread(target=sub_invoices, daemon=True)
+  invoice_sub.start()
+  ```
+  
+* Once the thread has started, you can create a new invoice and watch the subscription detect it.
+
+  Note that due to using REPL/Jupyter Notebook, we will see both the return of `add_invoice()` command, and also the `print()` from our subscription which shows some double information. Usually you would be adding these invoices to a queue or database.
+
+  ```python
+  lnd.add_invoice(value=500)
+  ```
+  
+  The same process can be used for `subscribe_transactions()`, `subscribe_channel_events()` and `subscribe_channel_graph()`. The number of threads is limited only by your CPU, but for low computation threads like most of these, the number could be some 000's
+  
+----
+
+###14. Hold Invoices
+
+* Quite a complicated workflow, where the two defining characteristics are that i) the receiver does not generate the preimage for the payment, and that ii) the receiver does not have to settle the invoice immediately.
