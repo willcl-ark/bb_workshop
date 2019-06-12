@@ -440,3 +440,56 @@ This window must be left running (it can run in a screen/tmux session if you so 
 * After settling or canceling, the recipient should receive the appropriate response from their invoice subscription (and possibly the return of the settle/cancel call itself).
 
 * The sender's `pay_inv()` thread will then also return. It will include either a populated `payment_error` field indicating failure, or a populated `payment_preimage` field, indicating the payment was settled successfully. 
+
+----
+
+### Advanced Challenges
+
+#### Route-finding
+
+* See if you can find a route to 03933884aaf1d6b108397e5efe5c86bcf2d8ca8d2f700eda99db9214fc2712b134 for about 3000 satoshis
+
+    * If not, choose a new, well-conneted node from [1ml-testnet](https://1ml.com/testnet), connect the them and open an appropriately-sized channel.
+    
+    * Try searching for a route again.
+
+* Get a new invoice from this node, hint: the node pubkey is that of [Starblocks](https://starblocks.acinq.co/#/), so visit their website and proceed to buy a coffee.
+
+* When you have your invoice for the coffee, decode the payment request just to double check the node_pubkey is the same (and that they didn't change node pub_key since writing of this guide!)
+
+* Don't just pay the payment request, using the route that you've saved, pay the invoice using `send_to_route()` or `send_to_route_sync()` command.
+
+----
+
+#### Channel balancing:
+
+* Get an invoice which will allow you to deplete a channel and empty it (hint: you must reserve 1% of a channel capacity, so you can never fully deplete)
+
+* Open another channel with 1.5x the capacity of the first, but ensure that it is with a different peer
+
+* Try to find a route from your newly-funded channel, back to yourself at your original empty channel
+
+* Make a payment along the route with a value of 50% the capacity of the original channel. Now you should have two balanced channels
+
+----
+
+#### Bi-directional payment channel stream speedtest
+
+* Stop the jupyter notebook kernel (don't need to close the workbook)
+
+* From the terminal, remove current version of lnd-grpc, `pip uninstall lnd-grpc`
+
+* Change to the home directory, clone the lnd-grpc source code and enter the directory:
+
+  `cd ~; git clone https://github.com/willcl-ark/lnd_grpc.git; cd lnd_grpc`
+
+* Checkout branch send_payment_sphinx:
+
+  `git checkout send_payment_sphinx`
+  
+* install this branch as an editable package:
+
+  `pip install -e .`
+
+* This branch includes a change to the asynchronous `send_payment()` method so that it will accept an arbitrary iterator which generates provides it with the invoices to pay.
+
