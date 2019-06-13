@@ -117,7 +117,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
 * If you restart your node then you'll need to unlock your node after restarting it, you can do that with this command:
 
     ```python
-    lnd.unlock_wallet_wallet_password='password')
+    lnd.unlock_wallet(wallet_password='password')
     ```
 
 ----
