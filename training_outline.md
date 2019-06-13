@@ -248,7 +248,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
 * Once you have retrieved the payment request of the invoice you wish to pay, and especially for this method we have used of communicating them where there is a good chance they might get mixed up, it is a good idea to decode the payment request and check that it is as you expect.
    
     ```python
-    lnd.decode_payment_req(pay_req="payment_request_string")
+    lnd.decode_pay_req(pay_req="payment_request_string")
     ```
     
 * The payment request is similarly decoded and checked using the `lncli` workflow
