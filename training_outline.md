@@ -485,11 +485,11 @@ This window must be left running (it can run in a screen/tmux session if you so 
 
 ----
 
-#### Bi-directional payment channel stream speedtest
+#### Bi-directional payment channel sphinx send
 
 * Stop the jupyter notebook kernel (don't need to close the workbook)
 
-* From the terminal, remove current version of lnd-grpc, `pip uninstall lnd-grpc`
+* From the terminal, remove current version of lnd-grpc, `pip uninstall --user lnd-grpc`
 
 * Change to the home directory, clone the lnd-grpc source code and enter the directory:
 
@@ -503,5 +503,11 @@ This window must be left running (it can run in a screen/tmux session if you so 
 
   `pip install -e .`
 
-* This branch includes a change to the asynchronous `send_payment()` method so that it will accept an arbitrary iterator which generates provides it with the invoices to pay.
+* This branch includes a change to the asynchronous `send_payment()` method so that it will accept an arbitrary request generator.
+
+* It also expands the SendPayment protocol message to include the `key_send` attribute, which enables you to send to a node's (public) key directly.
+
+* Attempt a sphinx send using the `send_payment(key_send=node_pubkey)` RPC call.
+
+* Create a request generator to use with a sphinx `send_payment` call which will send a payment of 20 satoshis every 20 seconds for 1 minute.
 
