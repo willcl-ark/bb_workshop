@@ -64,19 +64,13 @@ This window must be left running (it can run in a screen/tmux session if you so 
   pip install --user lnd_grpc
   ```
     
-* Then:
+* Kubernetes/Jupyterhub only can install qr code module:
 
   ```bash
   pip install --user qrcode[pil]
   ```
   
-  We will only use the QR code module to display a receive address to more easily send you testnet coins.
-  
-* Add the qrcode script path to PATH to satisfy warning:
-
-  ```bash
-  PATH=$PATH:/home/jovyan/.local/bin
-  ```
+  We will only use the qr code module to display a receive address to more easily send you testnet coins.
   
 ----
 
@@ -114,11 +108,13 @@ This window must be left running (it can run in a screen/tmux session if you so 
   
     ```
     
-* If you restart your node then you'll need to unlock your node after restarting it, you can do that with this command:
+* If you restart your node then you won't need to run `init_wallet` again as you already have one created, but you will need to unlock (technically decrypt) your wallet after restarting it, you can do that with this command:
 
     ```python
     lnd.unlock_wallet(wallet_password='password')
     ```
+    
+  This will decrypt the seed, and also start the Lightning RPC server.
 
 ----
 
@@ -141,9 +137,9 @@ This window must be left running (it can run in a screen/tmux session if you so 
 * If you wanted to be notified when sync is complete, you could wait on the result with something like:
 
     ```python
-    import time
+    from time import sleep
     while not lnd.get_info().synced_to_chain:
-        time.sleep(1)
+        sleep(1)
     print('Synced!')
     ```
 
@@ -153,7 +149,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
     addr = lnd.new_address('p2wkh')
     ```  
 
-* Create a QR code to get some testnet bitcoin:
+* Create a QR code to get some testnet bitcoin. If you are using Jupyter Notebook you can run the following, otherwise you can print and copy your address using `print(addr.address)` and then display it with an online QR code reader such as [qr code generator](https://www.the-qrcode-generator.com):
 
     ```python
     import qrcode
@@ -162,8 +158,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
     display(qr_code)
     ```
     
-* Wait for confirmations. Unfortunately testnet blocktimes can be between 1 minute and 20 minutes due to its nature, so hopefully we don't have to wait long. You can check whether your coins are confirmed using `lnd.wallet_balance()` which will show it as unconfirmed balance.
-
+* Wait for confirmations. Unfortunately testnet blocktimes can be between 1 minute and 20 minutes due to its nature, so hopefully we don't have to wait long. You can check whether your coins are confirmed using `lnd.wallet_balance()` which will show it as unconfirmed balance when it has seen it on the network.
 
 ----
 
@@ -175,7 +170,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
 
 * To more easily swap node pubkeys, which you can obtain from `lnd.get_info().identity_pubkey`, perhaps a good idea to paste them into a google document: [node pubkeys](https://docs.google.com/spreadsheets/d/1eXq1bJFH_5I6ID2kpeJBdOkN5RMQCZmIug3GTgN2G6Y/edit#gid=0)
 
-* To get the IP address of workshop peers, open a new terminal (not python) window, and simply type `hostname -i`. This should return the required ip address.
+* If on Kubernetes, to get the IP address of workshop peers, open a new terminal (not python) window, and simply type `hostname -i`. This should return the required ip address.
 
 * The default port of 9735 is being used.
 
@@ -191,7 +186,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
     lnd.open_channel_sync(node_pubkey_string='0270685ca81a8e4d4d01beec5781f4cc924684072ae52c507f8ebe9daf0caaab7b', local_funding_amount=500000, push_sat=250000)
     ```
     
-* Note that connecting is not the same as opening a channel, it is simply a networking-level connection, but it helps to find peers using ip addresses in case you do not have the full network graph info (or they do not appear in your network graph).
+* Note that connecting is *not* the same as opening a channel, it is simply a networking-level connection, but it helps to find peers using ip addresses in case you do not have the full network graph info (or they do not appear in your network graph).
 
 * You can see which peers you are connected to at any time using
     ```python
@@ -217,6 +212,12 @@ This window must be left running (it can run in a screen/tmux session if you so 
 * If successful, you will see the funding txid returned
 
 * Try to open a channel with at least one local peer and your 'WAN' peer from 1ML databse.
+
+* If you are struggling to open any channels, you can first `connect()` to [lightning faucet](https://faucet.lightning.community).
+
+    * Once connected to them you can use their form to request they open a channel with you, you can even "cheat" a bit and request a balanced channel by setting 'initial balance' to half of the channel capacity.
+    
+    * They will be able to find you by your pubkey, using your (outbound) connection and (outgoing, not 9735) port you just initiated with them.
 
 ----
 
