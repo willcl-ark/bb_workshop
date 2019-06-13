@@ -81,7 +81,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
 ----
 
 ### 4. Initialise the rpc connection
-* In this Notebook window (Kubernetes) or a python REPL console (own machine):
+* In a Jupyter Notebook window (if using Kubernetes) or a python REPL console (if using own machine):
 
 * Import the client class from the package: 
 
