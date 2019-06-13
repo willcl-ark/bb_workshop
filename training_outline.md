@@ -188,8 +188,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
 
     ```python
     lnd.connect('0270685ca81a8e4d4d01beec5781f4cc924684072ae52c507f8ebe9daf0caaab7b@159.203.125.125')
-    lnd.open_channel_sync(node_pubkey_string='0270685ca81a8e4d4d01beec5781f4cc924684072ae52c507f8ebe9daf0caaab7b',
-                          local_funding_amt=500000, push_amt=250000)
+    lnd.open_channel_sync(node_pubkey_string='0270685ca81a8e4d4d01beec5781f4cc924684072ae52c507f8ebe9daf0caaab7b', local_funding_amount=500000, push_sat=250000)
     ```
     
 * Note that connecting is not the same as opening a channel, it is simply a networking-level connection, but it helps to find peers using ip addresses in case you do not have the full network graph info (or they do not appear in your network graph).
