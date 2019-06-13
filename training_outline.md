@@ -461,7 +461,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
 
 * See if you can find a route to 03933884aaf1d6b108397e5efe5c86bcf2d8ca8d2f700eda99db9214fc2712b134 for about 3000 satoshis
 
-    * If not, choose a new, well-conneted node from [1ml-testnet](https://1ml.com/testnet), connect the them and open an appropriately-sized channel.
+    * If not, choose a new, well-conneted node from [1ml-testnet](https://1ml.com/testnet), connect to them and open an appropriately-sized channel.
     
     * Try searching for a route again.
 
@@ -469,7 +469,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
 
 * When you have your invoice for the coffee, decode the payment request just to double check the node_pubkey is the same (and that they didn't change node pub_key since writing of this guide!)
 
-* Don't just pay the payment request, using the route that you've saved, pay the invoice using `send_to_route()` or `send_to_route_sync()` command.
+* Don't just pay the payment request, using the route that you've saved, pay the invoice using `send_to_route()` or `send_to_route_sync()` command, passing in the route that you recovered earlier.
 
 ----
 
@@ -477,11 +477,11 @@ This window must be left running (it can run in a screen/tmux session if you so 
 
 * Get an invoice which will allow you to deplete a channel and empty it (hint: you must reserve 1% of a channel capacity, so you can never fully deplete)
 
-* Open another channel with 1.5x the capacity of the first, but ensure that it is with a different peer
+* Open a new channel with a new peer that has 1.5x the capacity of the first
 
-* Try to find a route from your newly-funded channel, back to yourself at your original empty channel
+* Try to find a route from your newly-funded channel, back to yourself at your original, now almost empty, channel
 
-* Make a payment along the route with a value of 50% the capacity of the original channel. Now you should have two balanced channels
+* Make a payment along the route with a value of 50% the capacity of the original channel. Now you should have two balanced channels!
 
 ----
 
@@ -489,13 +489,13 @@ This window must be left running (it can run in a screen/tmux session if you so 
 
 * Stop the jupyter notebook kernel (don't need to close the workbook)
 
-* From the terminal, remove current version of lnd-grpc, `pip uninstall --user lnd-grpc`
+* From the terminal, remove current version of lnd-grpc install using pip, `pip uninstall --user lnd-grpc`
 
-* Change to the home directory, clone the lnd-grpc source code and enter the directory:
+* Change to the home directory, clone the lnd-grpc source code from git and enter the clone directory:
 
   `cd ~; git clone https://github.com/willcl-ark/lnd_grpc.git; cd lnd_grpc`
 
-* Checkout branch send_payment_sphinx:
+* Checkout WIP branch 'send_payment_sphinx':
 
   `git checkout send_payment_sphinx`
   
@@ -503,11 +503,11 @@ This window must be left running (it can run in a screen/tmux session if you so 
 
   `pip install -e .`
 
-* This branch includes a change to the asynchronous `send_payment()` method so that it will accept an arbitrary request generator.
+* This branch includes a change to the asynchronous `send_payment()` method so that it will accept an arbitrary request generator. Check the source code [here](https://github.com/willcl-ark/lnd_grpc/blob/send_payment_sphinx/lnd_grpc/lightning.py#L408) or at L408 of lnd_grpc/lightning.py in your own editor to get an idea of the function. An example generator can be found right above it at L400.
 
 * It also expands the SendPayment protocol message to include the `key_send` attribute, which enables you to send to a node's (public) key directly.
 
 * Attempt a sphinx send using the `send_payment(key_send=node_pubkey)` RPC call.
 
-* Create a request generator to use with a sphinx `send_payment` call which will send a payment of 20 satoshis every 20 seconds for 1 minute.
+* Create a custom request generator to use with a sphinx `send_payment` call which will send a payment of 20 satoshis every 20 seconds for 1 minute.
 
