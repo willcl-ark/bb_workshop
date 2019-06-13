@@ -111,6 +111,13 @@ This window must be left running (it can run in a screen/tmux session if you so 
 
     ```python
     lnd.init_wallet(wallet_password='password', cipher_seed_mnemonic=seed.cipher_seed_mnemonic)
+  
+    ```
+    
+* If you restart your node then you'll need to unlock your node after restarting it, you can do that with this command:
+
+    ```python
+    lnd.unlock_wallet_wallet_password='password')
     ```
 
 ----
@@ -506,6 +513,8 @@ This window must be left running (it can run in a screen/tmux session if you so 
 * This branch includes a change to the asynchronous `send_payment()` method so that it will accept an arbitrary request generator. Check the source code [here](https://github.com/willcl-ark/lnd_grpc/blob/send_payment_sphinx/lnd_grpc/lightning.py#L408) or at L408 of lnd_grpc/lightning.py in your own editor to get an idea of the function. An example generator can be found right above it at L400.
 
 * It also expands the SendPayment protocol message to include the `key_send` attribute, which enables you to send to a node's (public) key directly.
+
+* `key_send` or 'sphinx send' payments need both sender and final node to both have the option compiled in and enabled at this stage.
 
 * Attempt a sphinx send using the `send_payment(key_send=node_pubkey)` RPC call.
 
