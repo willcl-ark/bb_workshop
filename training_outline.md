@@ -42,7 +42,7 @@ Dev environment should be one of:
 * Run LND using Neutrino in testnet mode with the following command:
 
     ```bash
-    ./lnd --bitcoin.active --bitcoin.testnet --debuglevel=info --bitcoin.node=neutrino --neutrino.addpeer=btcd-testnet.lightning.computer 
+    ./lnd --bitcoin.active --bitcoin.testnet --debuglevel=info --bitcoin.node=neutrino --neutrino.connect=btcd-testnet.lightning.computer 
     ```
     
 This will connect to Lightning Labs' neutrino node so no local bitcoind is necessary. There has been ~1,500,000 blocks on testnet3 now, so inital sync can take some time. Hopefully no longer than 10 minutes with some decent CPU. With debug level set to 'debug' we can keep an eye on progress and turn down the debug level later using the python RPCs.
@@ -225,10 +225,10 @@ This window must be left running (it can run in a screen/tmux session if you so 
 
 * Now we want to make a payment. Although direct 'key_send'/'sphinx send' is technically possible on mainnet today, we will use the standard invoice-payment lightning model
 
-* First, the receiver must create an invoice. This is easily done with `lnd.add_invoice()` which needs no additional parameters, not even a value! However conventionally the receiver requests a 'value' at least. A zero-value invoice can have any amount paid to it otherwise...
+* First, the receiver must create an invoice. This is easily done with `lnd.add_invoice()` which needs no additional parameters, not even a value! However conventionally the receiver requests a 'value' at least. A zero-value invoice can have any amount paid to it otherwise... It's useful to add a memo to the invoice both for yourself, and because this will get passed as part of the invoice to the recipient.
 
     ```python
-    invoice = lnd.add_invoice(value=5000)
+    invoice = lnd.add_invoice(value=5000, memo='test invoice from ?')
     invoice
     ```
     
@@ -252,7 +252,7 @@ This window must be left running (it can run in a screen/tmux session if you so 
     lnd.decode_pay_req(pay_req="payment_request_string")
     ```
     
-* The payment request is similarly decoded and checked using the `lncli` workflow
+* The payment request is similarly decoded and checked using the `lncli` workflow, except it appears to happen automatically when you use their `payinvoice` command - you are prompted to confirm the description, amount and destination.
 
 * If the payment request is correct, then we can pay the invoice using `send_payment()` command:
 
